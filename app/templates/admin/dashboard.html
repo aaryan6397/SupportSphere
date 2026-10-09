@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | SupportSphere{% endblock %}
+
+{% block content %}
+<section class="dashboard-page admin-page">
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">ADMIN CONTROL CENTER</p>
+            <h1>System overview.</h1>
+            <p>Monitor support demand, manage agents and assign every customer request.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-stats">
+        <article><span>Total tickets</span><strong>{{ stats.total }}</strong></article>
+        <article><span>Open tickets</span><strong>{{ stats.open }}</strong></article>
+        <article><span>In progress</span><strong>{{ stats.in_progress }}</strong></article>
+        <article><span>Resolved</span><strong>{{ stats.resolved }}</strong></article>
+        <article><span>SLA at risk</span><strong>{{ stats.sla_at_risk }}</strong></article>
+        <article><span>SLA breached</span><strong>{{ stats.sla_breached }}</strong></article>
+    </div>
+
+    <section class="analytics-section">
+        <div class="section-title-row">
+            <div>
+                <p class="eyebrow">LIVE REPORTS</p>
+                <h2>Support performance</h2>
+            </div>
+            <div class="satisfaction-card">
+                <span>Customer satisfaction</span>
+                <strong>{{ average_rating }} <small>/ 5</small></strong>
+                <p>Based on {{ feedback_count }} feedback entries</p>
+            </div>
+        </div>
+
+        <div class="analytics-grid">
+            <article class="analytics-card">
+                <p class="eyebrow">TICKETS BY CATEGORY</p>
+                {% if category_stats %}
+                    <div class="bar-chart">
+                        {% for item in category_stats %}
+                            <div class="bar-row">
+                                <div class="bar-label"><span>{{ item.category }}</span><b>{{ item.count }}</b></div>
+                                <div class="bar-track"><span style="width: {{ item.percentage }}%"></span></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-report">Category data will appear after tickets are created.</p>
+                {% endif %}
+            </article>
+
+            <article class="analytics-card">
+                <p class="eyebrow">AGENT WORKLOAD</p>
+                {% if agent_workload %}
+                    <div class="agent-workload-list">
+                        {% for agent in agent_workload %}
+                            <div class="workload-row">
+                                <div><b>{{ agent.name }}</b><span>{{ agent.active }} active · {{ agent.high }} high · {{ agent.critical }} critical · {{ agent.resolved }} resolved</span></div>
+                                <strong>{{ agent.active }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-report">Create agents to track their workload.</p>
+                {% endif %}
+            </article>
+        </div>
+        {% if recommended_agent %}
+            <article class="recommendation-card">
+                <p class="eyebrow">ASSIGNMENT RECOMMENDATION</p>
+                <h3>{{ recommended_agent.name }}</h3>
+                <p>Lowest current workload score: {{ recommended_agent.active }} active, {{ recommended_agent.high }} high-priority, {{ recommended_agent.critical }} critical, and {{ recommended_agent.breached }} breached tickets.</p>
+                <small>Recommendation only — an admin still makes the assignment.</small>
+            </article>
+        {% endif %}
+    </section>
+
+    <div class="admin-grid">
+        <section class="tickets-section">
+            <div class="section-title-row">
+                <div>
+                    <p class="eyebrow">TICKET OPERATIONS</p>
+                    <h2>All tickets</h2>
+                </div>
+            </div>
+
+            <form method="GET" class="ticket-filter-panel">
+                    <input type="search" name="q" value="{{ filters.q }}" placeholder="Search ticket, subject or customer...">
+                    <select name="status">
+                        <option value="">All statuses</option>
+                        <option value="open">Open</option><option value="assigned">Assigned</option>
+                        <option value="in_progress">In progress</option><option value="waiting_customer">Waiting for customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option><option value="reopened">Reopened</option><option value="escalated">Escalated</option>
+                    </select>
+                    <select name="priority">
+                        <option value="">All priorities</option>
+                        <option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+                    </select>
+                    <select name="category">
+                        <option value="">All categories</option>
+                        {% for category in ['Payment', 'Delivery', 'Account', 'Refund', 'Product', 'Other'] %}
+                            <option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="per_page"><option value="10" {% if filters.per_page == 10 %}selected{% endif %}>10 per page</option><option value="25" {% if filters.per_page == 25 %}selected{% endif %}>25 per page</option><option value="50" {% if filters.per_page == 50 %}selected{% endif %}>50 per page</option></select>
+                    <button type="submit" class="secondary-button">Apply</button>
+            </form>
+
+            {% if tickets %}
+
+                <div class="ticket-table admin-ticket-table">
+                    <div class="ticket-row ticket-head">
+                        <span>Ticket</span><span>Customer / Subject</span><span>Priority</span><span>Status</span><span>Assign agent</span>
+                    </div>
+                    {% for ticket in tickets %}
+                        <div class="ticket-row filterable-ticket-row"
+                             data-search="{{ ticket.ticket_code }} {{ ticket.subject }} {{ ticket.customer.name }} {{ ticket.category }}"
+                             data-status="{{ ticket.status }}" data-priority="{{ ticket.priority }}" data-category="{{ ticket.category }}">
+                            <span class="ticket-code">{{ ticket.ticket_code }}</span>
+                            <span>
+                                <a class="ticket-subject-link" href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">{{ ticket.subject }}</a>
+                                <small>{{ ticket.customer.name }}</small>
+                            </span>
+                            <span class="priority {{ ticket.priority }}">{{ ticket.priority|capitalize }}</span>
+                            <span class="ticket-status {{ ticket.status }}">{{ ticket.status|replace('_', ' ')|capitalize }}</span>
+                            <form method="POST" action="{{ url_for('admin.assign_ticket', ticket_id=ticket.id) }}" class="assign-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="agent_id" required>
+                                    <option value="">Select agent</option>
+                                    {% for agent in agents %}
+                                        <option value="{{ agent.id }}" {% if ticket.assigned_agent_id == agent.id %}selected{% endif %}>{{ agent.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit">Assign</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div id="filterEmptyState" class="empty-tickets" hidden>
+                    <p>No tickets matched your filters.</p>
+                    <span>Try changing search or filter values.</span>
+                </div>
+                {% if pagination.pages > 1 %}
+                    <nav class="pagination" aria-label="Ticket pages">
+                        {% if pagination.has_prev %}<a href="{{ url_for('admin.dashboard', page=pagination.prev_num, q=filters.q, status=filters.status, priority=filters.priority, category=filters.category, per_page=filters.per_page) }}">← Previous</a>{% endif %}
+                        <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+                        {% if pagination.has_next %}<a href="{{ url_for('admin.dashboard', page=pagination.next_num, q=filters.q, status=filters.status, priority=filters.priority, category=filters.category, per_page=filters.per_page) }}">Next →</a>{% endif %}
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="empty-tickets"><p>No tickets have been created.</p><span>Customer requests will appear here.</span></div>
+            {% endif %}
+        </section>
+
+        <aside class="admin-sidebar">
+            <article class="admin-summary">
+                <p class="eyebrow">SYSTEM USERS</p>
+                <div><span>Active agents</span><strong>{{ stats.agents }}</strong></div>
+                <div><span>Customers</span><strong>{{ stats.customers }}</strong></div>
+            </article>
+
+            <article class="create-agent-card">
+                <p class="eyebrow">TEAM MANAGEMENT</p>
+                <h2>Create agent</h2>
+                <form method="POST" action="{{ url_for('admin.create_agent') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="agent_name">Full name</label>
+                    <input id="agent_name" name="name" type="text" placeholder="Mr. Aaryan" required>
+                    <label for="agent_email">Email address</label>
+                    <input id="agent_email" name="email" type="email" placeholder="aaryan@gmail.com" required>
+                    <label for="agent_password">Temporary password</label>
+                    <div class="password-field"><input id="agent_password" name="password" type="password" minlength="8" placeholder="Minimum 8 characters" required><button type="button" class="password-toggle" data-password-toggle="agent_password" aria-label="Show password" aria-pressed="false">Show</button></div>
+                    <button class="primary-button form-button" type="submit">Create agent <span>→</span></button>
+                </form>
+            </article>
+        </aside>
+    </div>
+</section>
+{% endblock %}

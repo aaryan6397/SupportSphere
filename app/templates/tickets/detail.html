@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ticket.ticket_code }} | SupportSphere{% endblock %}
+
+{% block content %}
+<section class="ticket-detail-page">
+    <div class="detail-header">
+        <div>
+            <a class="back-link" href="{{ url_for('main.dashboard') }}">← Back to dashboard</a>
+            <p class="eyebrow">SUPPORT TICKET</p>
+            <h1>{{ ticket.subject }}</h1>
+            <p class="ticket-code-large">{{ ticket.ticket_code }}</p>
+        </div>
+        <span class="ticket-status {{ ticket.status }}">{{ ticket.status|replace('_', ' ')|capitalize }}</span>
+    </div>
+
+    <div class="detail-grid">
+        <article class="ticket-main-card">
+            <div class="detail-label">
+                <span>YOUR ISSUE</span>
+                <small>Created {{ ticket.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+            </div>
+            <p class="ticket-description">{{ ticket.description }}</p>
+
+            {% if ticket.attachments %}
+                <div class="attachment-section">
+                    <p class="eyebrow">ATTACHMENTS</p>
+                    {% for attachment in ticket.attachments %}
+                        <a class="attachment-link" href="{{ url_for('tickets.download_attachment', attachment_id=attachment.id) }}">
+                            <span>📎 {{ attachment.original_filename }}</span><small>Download →</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <hr>
+            <div class="conversation-heading">
+                <div><p class="eyebrow">CONVERSATION</p><h2>Messages</h2></div>
+                <span>{{ comments|length }} visible replies</span>
+            </div>
+
+            <div class="conversation-list">
+                {% for comment in comments %}
+                    <article class="message-card {% if comment.is_internal %}internal-message{% elif comment.author.role == 'customer' %}customer-message{% else %}agent-message{% endif %}">
+                        <div class="message-meta">
+                            <strong>{{ comment.author.name }}</strong>
+                            <span>{{ comment.author.role|capitalize }} · {{ comment.created_at.strftime('%d %b, %I:%M %p') }}</span>
+                        </div>
+                        {% if comment.is_internal %}<p class="eyebrow">INTERNAL NOTE · TEAM ONLY</p>{% endif %}
+                        <p>{{ comment.message }}</p>
+                    </article>
+                {% else %}
+                    <p class="no-messages">No replies yet. Our support team will respond soon.</p>
+                {% endfor %}
+            </div>
+
+            {% if ticket.status not in ['resolved', 'closed'] %}
+                <form method="POST" action="{{ url_for('tickets.add_comment', ticket_id=ticket.id) }}" class="reply-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="message">Add a reply</label>
+                    <textarea id="message" name="message" rows="4" placeholder="Add more information about your issue..." required></textarea>
+                    {% if current_user.role in ['agent', 'admin'] %}
+                        <label class="remember-label">
+                            <input type="checkbox" name="is_internal">
+                            Add as internal note (customers cannot see this)
+                        </label>
+                    {% endif %}
+                    <button type="submit" class="primary-button form-button">Send reply <span>→</span></button>
+                </form>
+            {% endif %}
+        </article>
+
+        <aside class="ticket-sidebar">
+            <article>
+                <p class="eyebrow">TICKET DETAILS</p>
+                <div class="detail-list">
+                    <div><span>Category</span><b>{{ ticket.category }}</b></div>
+                    <div><span>Priority</span><b class="priority {{ ticket.priority }}">{{ ticket.priority|capitalize }}</b></div>
+                    <div><span>Assigned agent</span><b>{% if ticket.assigned_agent %}{{ ticket.assigned_agent.name }}{% else %}Not assigned yet{% endif %}</b></div>
+                    <div><span>Last updated</span><b>{{ ticket.updated_at.strftime('%d %b %Y') }}</b></div>
+                    {% if ticket.sla_due_at %}
+                        <div>
+                            <span>SLA status</span>
+                            <b class="priority {% if ticket.sla_status == 'BREACHED' %}critical{% elif ticket.sla_status == 'AT_RISK' %}high{% endif %}">
+                                {{ ticket.sla_status|replace('_', ' ')|capitalize }} · {{ ticket.sla_due_at.strftime('%d %b, %I:%M %p') }}
+                            </b>
+                        </div>
+                    {% endif %}
+                    {% if ticket.first_responded_at %}<div><span>First response</span><b>{{ ticket.first_responded_at.strftime('%d %b, %I:%M %p') }}</b></div>{% endif %}
+                    {% if ticket.resolved_at %}<div><span>Resolved</span><b>{{ ticket.resolved_at.strftime('%d %b, %I:%M %p') }}</b></div>{% endif %}
+                </div>
+            </article>
+
+            {% if current_user.role == 'agent' and ticket.status not in ['closed', 'resolved'] %}
+                <article class="status-update-card">
+                    <p class="eyebrow">AGENT ACTION</p>
+                    <form method="POST" action="{{ url_for('agent.update_ticket_status', ticket_id=ticket.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label for="status">Update ticket status</label>
+                        <select id="status" name="status">
+                            {% if ticket.status == 'assigned' %}
+                                <option value="in_progress">In progress</option><option value="waiting_customer">Waiting for customer</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option>
+                            {% elif ticket.status == 'in_progress' %}
+                                <option value="waiting_customer">Waiting for customer</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option>
+                            {% elif ticket.status == 'waiting_customer' %}
+                                <option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option>
+                            {% elif ticket.status == 'escalated' %}
+                                <option value="assigned">Assigned</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option>
+                            {% elif ticket.status == 'reopened' %}
+                                <option value="assigned">Assigned</option><option value="in_progress">In progress</option><option value="escalated">Escalated</option>
+                            {% endif %}
+                        </select>
+                        <button class="primary-button form-button" type="submit">Update status <span>→</span></button>
+                    </form>
+                </article>
+            {% endif %}
+
+            {% if ticket.status == 'resolved' %}
+                <article class="feedback-card">
+                    <p class="eyebrow">SUPPORT EXPERIENCE</p>
+                    {% if ticket.feedback %}
+                        <h3>Thank you for your feedback.</h3>
+                        <div class="rating-result">
+                            {% for number in range(1, 6) %}<span class="{% if number > ticket.feedback.rating %}empty-star{% endif %}">★</span>{% endfor %}
+                        </div>
+                        {% if ticket.feedback.comment %}<p class="feedback-comment">“{{ ticket.feedback.comment }}”</p>{% endif %}
+                    {% elif current_user.role == 'customer' %}
+                        <h3>How was your support experience?</h3>
+                        <form method="POST" action="{{ url_for('tickets.submit_feedback', ticket_id=ticket.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="rating-options">
+                                {% for number in range(1, 6) %}<label><input type="radio" name="rating" value="{{ number }}" {% if loop.first %}required{% endif %}> {{ number }}</label>{% endfor %}
+                            </div>
+                            <textarea name="feedback_comment" rows="4" placeholder="Tell us about your experience (optional)"></textarea>
+                            <button type="submit" class="primary-button form-button">Submit feedback <span>→</span></button>
+                        </form>
+                    {% else %}
+                        <p class="feedback-waiting">Customer feedback will appear here.</p>
+                    {% endif %}
+                </article>
+            {% endif %}
+
+            {% if current_user.role == 'customer' and ticket.status == 'resolved' %}
+                <article class="support-note">
+                    <p class="eyebrow">STILL NEED HELP?</p>
+                    <p>If the issue is not fully fixed, reopen this ticket and the support team will continue the conversation.</p>
+                    <form method="POST" action="{{ url_for('tickets.reopen_ticket', ticket_id=ticket.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="secondary-button">Reopen ticket</button>
+                    </form>
+                </article>
+            {% endif %}
+
+            <article class="support-note">
+                <p class="eyebrow">NEED MORE HELP?</p>
+                <p>Add every useful detail here. This helps the support team resolve your issue faster.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+{% endblock %}

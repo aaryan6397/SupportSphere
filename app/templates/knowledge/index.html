@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Knowledge Base | SupportSphere{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-heading"><div><p class="eyebrow">SELF-SERVICE SUPPORT</p><h1>Knowledge Base</h1><p>Find clear answers before creating a support ticket.</p></div>{% if current_user.role == 'admin' %}<a class="primary-button" href="{{ url_for('knowledge.create_article') }}">New article <span>→</span></a>{% endif %}</div>
+    <form method="GET" class="ticket-filter-panel"><input type="search" name="q" value="{{ search }}" placeholder="Search help articles..."><select name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select><button class="secondary-button" type="submit">Search</button></form>
+    <section class="knowledge-grid">
+        {% for article in articles %}
+            <article class="knowledge-card"><p class="eyebrow">{{ article.category }} {% if not article.is_published %}· DRAFT{% endif %}</p><h2><a href="{{ url_for('knowledge.article_detail', slug=article.slug) }}">{{ article.title }}</a></h2><p>{{ article.summary }}</p><div class="knowledge-actions"><a href="{{ url_for('knowledge.article_detail', slug=article.slug) }}">Read article →</a>{% if current_user.role == 'admin' %}<a href="{{ url_for('knowledge.edit_article', article_id=article.id) }}">Edit</a><form method="POST" action="{{ url_for('knowledge.toggle_publish', article_id=article.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">{% if article.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>{% endif %}</div></article>
+        {% else %}<div class="empty-tickets"><p>No knowledge articles found.</p><span>Try another search term or category.</span></div>{% endfor %}
+    </section>
+</section>
+{% endblock %}

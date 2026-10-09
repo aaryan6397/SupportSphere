@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_code }} | SupportSphere{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <article class="auth-card">
+        <p class="eyebrow">ERROR {{ error_code }}</p>
+        <h1>{{ title }}</h1>
+        <p>{{ message }}</p>
+        <a class="primary-button form-button" href="{{ url_for('main.home') }}">
+            Return home <span>→</span>
+        </a>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}SupportSphere | Customer Support Made Simple{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+        <p class="eyebrow">CUSTOMER SUPPORT · SIMPLIFIED</p>
+
+        <h1>
+            Every customer issue<br>
+            deserves a <em>clear answer.</em>
+        </h1>
+
+        <p class="hero-text">
+            SupportSphere helps teams collect, assign, track and resolve
+            customer support tickets from one professional workspace.
+        </p>
+
+        <div class="hero-actions">
+            <a href="#" class="primary-button">
+                Create your first ticket <span>→</span>
+            </a>
+
+            <a href="#features" class="secondary-button">
+                Explore features
+            </a>
+        </div>
+    </div>
+
+    <div class="hero-card">
+        <div class="ticket-top">
+            <span class="ticket-label">LIVE TICKET</span>
+            <span class="status">IN PROGRESS</span>
+        </div>
+
+        <p class="ticket-number">TICKET #1025</p>
+
+        <h2>Payment deducted,<br>but order failed</h2>
+
+        <div class="ticket-info">
+            <div>
+                <span>Priority</span>
+                <strong class="high-priority">High</strong>
+            </div>
+
+            <div>
+                <span>Assigned agent</span>
+                <strong>Mr. Aaryan</strong>
+            </div>
+        </div>
+
+        <div class="ticket-progress">
+            <div class="progress-line">
+                <span></span>
+            </div>
+
+            <div class="progress-steps">
+                <span>Open</span>
+                <span>Assigned</span>
+                <span class="active-step">In progress</span>
+                <span>Resolved</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="features">
+    <div class="section-heading">
+        <p class="eyebrow">BUILT FOR EVERY ROLE</p>
+        <h2>One platform. Three workspaces.</h2>
+    </div>
+
+    <div class="feature-grid">
+        <article class="feature-card">
+            <span class="feature-number">01</span>
+            <h3>Customer Portal</h3>
+            <p>Create tickets, upload screenshots, follow replies and share feedback after resolution.</p>
+        </article>
+
+        <article class="feature-card highlighted">
+            <span class="feature-number">02</span>
+            <h3>Agent Workspace</h3>
+            <p>Manage assigned tickets, reply to customers, change status and resolve issues faster.</p>
+        </article>
+
+        <article class="feature-card">
+            <span class="feature-number">03</span>
+            <h3>Admin Control</h3>
+            <p>Assign tickets, manage users, track reports and review complete activity logs.</p>
+        </article>
+    </div>
+</section>
+
+{% endblock %}

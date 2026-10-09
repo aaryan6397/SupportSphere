@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}File Too Large | SupportSphere{% endblock %}
+
+{% block content %}
+
+<section class="error-page">
+    <p class="eyebrow">ERROR 413</p>
+
+    <h1>Your file is<br>too <em>large.</em></h1>
+
+    <p>
+        Attachments must be 5 MB or smaller.
+        Please choose a smaller image or document.
+    </p>
+
+    <a href="{{ url_for('tickets.create_ticket') }}"
+       class="primary-button">
+        Return to ticket form <span>→</span>
+    </a>
+</section>
+
+{% endblock %}

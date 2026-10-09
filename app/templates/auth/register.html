@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account | SupportSphere{% endblock %}
+
+{% block content %}
+
+<section class="auth-page">
+    <div class="auth-intro">
+        <p class="eyebrow">GET STARTED</p>
+
+        <h1>
+            Support should<br>
+            feel <em>simple.</em>
+        </h1>
+
+        <p>
+            Create your customer account to raise tickets,
+            follow updates and share feedback.
+        </p>
+    </div>
+
+    <div class="auth-card">
+        <p class="eyebrow">CREATE ACCOUNT</p>
+        <h2>Join SupportSphere</h2>
+
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="name">Full name</label>
+            <input id="name" name="name"
+                   type="text"
+                   placeholder="Aryan Kumar"
+                   required>
+
+            <label for="email">Email address</label>
+            <input id="email" name="email"
+                   type="email"
+                   placeholder="aryan@example.com"
+                   required>
+
+            <label for="password">Password</label>
+            <div class="password-field"><input id="password" name="password" type="password" minlength="8" placeholder="8+ chars, upper/lowercase and a number" required><button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password" aria-pressed="false">Show</button></div>
+
+            <label for="confirm_password">Confirm password</label>
+            <div class="password-field"><input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter password" required><button type="button" class="password-toggle" data-password-toggle="confirm_password" aria-label="Show password" aria-pressed="false">Show</button></div>
+
+            <button type="submit" class="primary-button form-button">
+                Create account <span>→</span>
+            </button>
+        </form>
+
+        <p class="auth-switch">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}">Log in</a>
+        </p>
+    </div>
+</section>
+
+{% endblock %}

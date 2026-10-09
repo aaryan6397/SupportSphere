@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: SupportSphere API
+  version: 1.0.0
+  description: Versioned SupportSphere ticket-management API using revocable hashed Bearer tokens.
+servers:
+  - url: http://127.0.0.1:5000/api/v1
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: SupportSphere API token
+  schemas:
+    TicketInput:
+      type: object
+      required: [subject, category, description]
+      properties:
+        subject: {type: string, maxLength: 200}
+        category: {type: string, enum: [Payment, Delivery, Account, Refund, Product, Other]}
+        priority: {type: string, enum: [low, medium, high, critical], default: medium}
+        description: {type: string, maxLength: 5000}
+  responses:
+    Unauthorized:
+      description: Missing, malformed, revoked, or invalid Bearer token
+paths:
+  /tickets:
+    get:
+      summary: List tickets visible to the token owner
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1}}
+        - {name: per_page, in: query, schema: {type: integer, enum: [10, 25, 50, 100]}}
+        - {name: q, in: query, schema: {type: string}}
+        - {name: status, in: query, schema: {type: string}}
+        - {name: priority, in: query, schema: {type: string}}
+      responses:
+        '200': {description: Paginated ticket collection}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      summary: Create a ticket as a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TicketInput'}
+      responses:
+        '201': {description: Ticket created}
+        '403': {description: Token is not owned by a customer}
+  /tickets/{ticketId}:
+    parameters:
+      - {name: ticketId, in: path, required: true, schema: {type: integer}}
+    get:
+      summary: Get one authorized ticket
+      responses:
+        '200': {description: Ticket}
+        '403': {description: Ticket is outside caller scope}
+        '404': {description: Ticket not found}
+    patch:
+      summary: Update status as the assigned agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, enum: [assigned, in_progress, waiting_customer, resolved, escalated, reopened, closed]}
+      responses:
+        '200': {description: Ticket updated}
+        '409': {description: Invalid lifecycle transition}
+  /tickets/{ticketId}/comments:
+    post:
+      summary: Add public reply or internal note
+      parameters:
+        - {name: ticketId, in: path, required: true, schema: {type: integer}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: {type: string, maxLength: 5000}
+                is_internal: {type: boolean, default: false}
+      responses:
+        '201': {description: Comment created}
+        '403': {description: Caller lacks ticket/note permission}
+  /tickets/{ticketId}/assign:
+    post:
+      summary: Assign a ticket as an admin
+      parameters:
+        - {name: ticketId, in: path, required: true, schema: {type: integer}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id]
+              properties:
+                agent_id: {type: integer}
+      responses:
+        '200': {description: Ticket assigned}
+        '403': {description: Caller is not admin}
+  /tickets/{ticketId}/resolve:
+    post:
+      summary: Resolve a ticket as its assigned agent
+      parameters:
+        - {name: ticketId, in: path, required: true, schema: {type: integer}}
+      responses:
+        '200': {description: Ticket resolved}
+        '409': {description: Invalid lifecycle transition}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Create Ticket | SupportSphere{% endblock %}
+
+{% block content %}
+
+<section class="ticket-form-page">
+    <div class="form-page-heading">
+        <p class="eyebrow">NEW SUPPORT REQUEST</p>
+        <h1>Tell us what<br>needs <em>attention.</em></h1>
+
+        <p>
+            Give the support team clear information so
+            they can solve your issue quickly.
+        </p>
+    </div>
+
+    <form method="POST" 
+        enctype="multipart/form-data"
+        class="ticket-form-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-card-header">
+            <p class="eyebrow">CREATE TICKET</p>
+            <span>Required fields *</span>
+        </div>
+
+        <label for="subject">Subject *</label>
+        <input
+            id="subject"
+            name="subject"
+            type="text"
+            placeholder="Payment deducted but order failed"
+            maxlength="200"
+            required
+        >
+
+        <div class="two-columns">
+            <div>
+                <label for="category">Category *</label>
+                <select id="category" name="category" required>
+                    <option value="">Select category</option>
+                    <option value="Payment">Payment</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="Account">Account</option>
+                    <option value="Refund">Refund</option>
+                    <option value="Product">Product</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="priority">Priority *</label>
+                <select id="priority" name="priority" required>
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+        </div>
+
+        <label for="description">Describe your issue *</label>
+        <textarea
+            id="description"
+            name="description"
+            rows="7"
+            placeholder="Explain what happened, when it happened, and any important details."
+            maxlength="5000"
+            required
+        ></textarea>
+
+        <label for="attachment">
+           Attachment <span class="optional-label">(optional)</span>
+        </label>
+
+       <input
+         id="attachment"
+         name="attachment"
+         type="file"
+         accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+        >
+
+<p class="file-help">
+    PNG, JPG, PDF, DOC or DOCX · Maximum 5 MB
+</p>
+
+        <button type="submit" class="primary-button form-button">
+            Submit ticket <span>→</span>
+        </button>
+    </form>
+</section>
+
+{% endblock %}

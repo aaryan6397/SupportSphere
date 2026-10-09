@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard | SupportSphere{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-heading">
+        <div><p class="eyebrow">CUSTOMER WORKSPACE</p><h1>Hello, {{ current_user.name }}.</h1><p>Track every support request from one place.</p></div>
+        <a href="{{ url_for('tickets.create_ticket') }}" class="primary-button">Create ticket <span>→</span></a>
+    </div>
+    <div class="dashboard-stats">
+        <article><span>Total tickets</span><strong>{{ stats.total }}</strong></article>
+        <article><span>Open</span><strong>{{ stats.open }}</strong></article>
+        <article><span>In progress</span><strong>{{ stats.in_progress }}</strong></article>
+        <article><span>Resolved</span><strong>{{ stats.resolved }}</strong></article>
+    </div>
+    <section class="tickets-section">
+        <div class="section-title-row"><div><p class="eyebrow">YOUR REQUESTS</p><h2>My support tickets</h2></div><span class="results-count">{{ pagination.total }} result{{ '' if pagination.total == 1 else 's' }}</span></div>
+        <form method="GET" class="ticket-filter-panel">
+            <input type="search" name="q" value="{{ filters.q }}" placeholder="Search ticket or subject...">
+            <select name="status"><option value="">All statuses</option>{% for value, label in [('open','Open'),('assigned','Assigned'),('in_progress','In progress'),('waiting_customer','Waiting for customer'),('resolved','Resolved'),('closed','Closed'),('reopened','Reopened'),('escalated','Escalated')] %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+            <select name="priority"><option value="">All priorities</option>{% for value in ['critical','high','medium','low'] %}<option value="{{ value }}" {% if filters.priority == value %}selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}</select>
+            <select name="per_page"><option value="10" {% if filters.per_page == 10 %}selected{% endif %}>10 per page</option><option value="25" {% if filters.per_page == 25 %}selected{% endif %}>25 per page</option><option value="50" {% if filters.per_page == 50 %}selected{% endif %}>50 per page</option></select>
+            <button type="submit" class="secondary-button">Apply</button>
+        </form>
+        {% if tickets %}
+            <div class="ticket-table"><div class="ticket-row ticket-head"><span>Ticket</span><span>Subject</span><span>Priority</span><span>Status</span><span>Updated</span></div>
+            {% for ticket in tickets %}<div class="ticket-row"><span class="ticket-code">{{ ticket.ticket_code }}</span><span><a class="ticket-subject-link" href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">{{ ticket.subject }}</a><small>{{ ticket.category }}</small></span><span class="priority {{ ticket.priority }}">{{ ticket.priority|capitalize }}</span><span class="ticket-status {{ ticket.status }}">{{ ticket.status|replace('_', ' ')|capitalize }}</span><span>{{ ticket.updated_at.strftime('%d %b %Y') }}</span></div>{% endfor %}</div>
+            {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Ticket pages">{% if pagination.has_prev %}<a href="{{ url_for('main.dashboard', page=pagination.prev_num, q=filters.q, status=filters.status, priority=filters.priority, category=filters.category, per_page=filters.per_page) }}">← Previous</a>{% endif %}<span>Page {{ pagination.page }} of {{ pagination.pages }}</span>{% if pagination.has_next %}<a href="{{ url_for('main.dashboard', page=pagination.next_num, q=filters.q, status=filters.status, priority=filters.priority, category=filters.category, per_page=filters.per_page) }}">Next →</a>{% endif %}</nav>{% endif %}
+        {% else %}<div class="empty-tickets"><p>No support tickets matched your filters.</p><span>Try a different search or create your first ticket.</span></div>{% endif %}
+    </section>
+</section>
+{% endblock %}

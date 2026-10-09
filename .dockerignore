@@ -1,0 +1,10 @@
+.venv
+venv
+__pycache__
+.pytest_cache
+.pytest-tmp
+.pip-tmp
+.git
+.env
+instance
+uploads

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Notifications | SupportSphere{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-heading"><div><p class="eyebrow">ACTIVITY CENTER</p><h1>Notifications</h1><p>Stay updated on ticket activity assigned to you.</p></div>
+    {% if notifications %}<form method="POST" action="{{ url_for('notifications.mark_all_read') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary-button" type="submit">Mark all read</button></form>{% endif %}</div>
+    <section class="tickets-section notification-list">
+        {% for notification in notifications %}
+            <article class="notification-item {% if not notification.is_read %}unread{% endif %}"><div><p class="eyebrow">{{ notification.created_at.strftime('%d %b, %I:%M %p') }}</p><h3>{{ notification.title }}</h3><p>{{ notification.message }}</p></div><form method="POST" action="{{ url_for('notifications.mark_read', notification_id=notification.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary-button" type="submit">{% if notification.is_read %}Open{% else %}Mark read & open{% endif %}</button></form></article>
+        {% else %}<div class="empty-tickets"><p>You are all caught up.</p><span>New ticket activity will appear here.</span></div>{% endfor %}
+    </section>
+</section>
+{% endblock %}

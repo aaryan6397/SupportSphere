@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}SupportSphere{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{{ url_for('main.home') }}" class="brand">
+            Support<span>Sphere</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="{{ url_for('main.home') }}#features">Features</a>
+
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}">
+                    Dashboard
+                </a>
+
+                <a href="{{ url_for('notifications.index') }}" aria-label="View notifications">
+                    Notifications{% if unread_notifications %} <span class="notification-badge">{{ unread_notifications }}</span>{% endif %}
+                </a>
+
+                <a href="{{ url_for('knowledge.index') }}">Knowledge Base</a>
+
+                  {% if current_user.role == "admin" %}
+                    <a href="{{ url_for('admin.activity_logs') }}">
+                       Activity logs
+                    </a>
+                    <a href="{{ url_for('admin.users') }}">Users</a>
+                 {% endif %}
+               
+                <span class="user-name">
+                    {{ current_user.name }}
+                </span>
+
+                <form method="POST" action="{{ url_for('auth.logout') }}" class="logout-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="nav-button">Logout</button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+
+                <a href="{{ url_for('auth.register') }}"
+                   class="nav-button">
+                    Create account
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/password-toggle.js') }}"></script>
+
+</body>
+</html>

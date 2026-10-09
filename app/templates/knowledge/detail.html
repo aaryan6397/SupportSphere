@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} | SupportSphere{% endblock %}
+{% block content %}
+<section class="ticket-form-page knowledge-detail"><a class="back-link" href="{{ url_for('knowledge.index') }}">← Back to Knowledge Base</a><p class="eyebrow">{{ article.category }} {% if not article.is_published %}· DRAFT{% endif %}</p><h1>{{ article.title }}</h1><p class="knowledge-summary">{{ article.summary }}</p><article class="ticket-main-card knowledge-body">{{ article.body }}</article>{% if current_user.role == 'admin' %}<a class="secondary-button" href="{{ url_for('knowledge.edit_article', article_id=article.id) }}">Edit article</a>{% endif %}</section>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs | SupportSphere{% endblock %}
+
+{% block content %}
+
+<section class="dashboard-page">
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">ADMIN CONTROL CENTER</p>
+            <h1>Activity logs.</h1>
+            <p>Review important actions performed across the support system.</p>
+        </div>
+
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="secondary-button">
+            ← Back to dashboard
+        </a>
+    </div>
+
+    <section class="tickets-section">
+        <div class="section-title-row">
+            <div>
+                <p class="eyebrow">SYSTEM HISTORY</p>
+                <h2>Recent activity</h2>
+            </div>
+
+            <span class="results-count">
+                {{ logs|length }} records
+            </span>
+        </div>
+
+        {% if logs %}
+            <div class="activity-log-list">
+                {% for log in logs %}
+                    <article class="activity-log-card">
+                        <div class="activity-icon">
+                            {% if log.action == "ticket_created" %}
+                                +
+                            {% elif log.action == "ticket_assigned" %}
+                                →
+                            {% elif log.action == "ticket_status_updated" %}
+                                ↻
+                            {% elif log.action == "ticket_reply_added" %}
+                                💬
+                            {% elif log.action == "feedback_submitted" %}
+                                ★
+                            {% else %}
+                                ✓
+                            {% endif %}
+                        </div>
+
+                        <div class="activity-content">
+                            <b>{{ log.description }}</b>
+
+                            <span>
+                                {% if log.actor %}
+                                    {{ log.actor.name }}
+                                    · {{ log.actor.role|capitalize }}
+                                {% else %}
+                                    System
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="activity-time">
+                            {{ log.created_at.strftime("%d %b %Y") }}
+                            <small>
+                                {{ log.created_at.strftime("%I:%M %p") }}
+                            </small>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-tickets">
+                <p>No activity recorded yet.</p>
+                <span>Ticket actions will appear here automatically.</span>
+            </div>
+        {% endif %}
+    </section>
+</section>
+
+{% endblock %}
